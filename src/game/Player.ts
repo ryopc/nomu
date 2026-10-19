@@ -3,14 +3,15 @@
  * Moves on beat, shoots on beat
  */
 
-import { Entity, EntityType, EntityLayer, EntityConfig } from './Entity';
+import type { EntityConfig } from './Entity';
+import { Entity, EntityType, EntityLayer } from './Entity';
 import { Bullet } from './Bullet';
 import { Vec2 } from '../utils/Vec2';
 
 export interface PlayerConfig extends EntityConfig {
   screenWidth: number;
   screenHeight: number;
-  moveSpeed?: number;     // Cells per beat
+  moveSpeed?: number; // Cells per beat
   shootCooldown?: number; // Beats between shots
 }
 
@@ -102,7 +103,7 @@ export class Player extends Entity {
     }
 
     // Update shoot cooldown
-    this.canShoot = (beatNumber - this.lastShotBeat) >= this.shootCooldown;
+    this.canShoot = beatNumber - this.lastShotBeat >= this.shootCooldown;
 
     // Shoot flash timer
     if (this.shootFlashTimer > 0) {
@@ -123,7 +124,7 @@ export class Player extends Entity {
 
   onTick(dt: number, beatIntervalMs: number): void {
     super.onTick(dt, beatIntervalMs);
-    
+
     // Smooth visual interpolation toward target
     if (this.isMoving) {
       // Visual position leads slightly
@@ -134,8 +135,10 @@ export class Player extends Entity {
   /**
    * Fire a bullet - returns bullet entity or null if on cooldown
    */
-  shoot(beatNumber: number): { bullet: Entity; timing: 'perfect' | 'great' | 'miss' } | null {
-    if (!this.canShoot) return null;
+  shoot(beatNumber: number): { bullet: Bullet; timing: 'perfect' | 'great' | 'miss' } | null {
+    if (!this.canShoot) {
+      return null;
+    }
 
     this.lastShotBeat = beatNumber;
     this.canShoot = false;
@@ -144,16 +147,16 @@ export class Player extends Entity {
 
     // Create bullet at player position
     const bulletPos = new Vec2(this.position.x, this.position.y - 1);
-    
+
     return {
-      bullet: new Entity(EntityType.Bullet, {
+      bullet: new Bullet({
         position: bulletPos,
-        velocity: new Vec2(0, -1), // Will be scaled by beat speed
+        speed: 2,
+        damage: 1,
         char: '│',
         color: '\x1b[96m', // Bright cyan
-        layer: EntityLayer.Bullet,
         size: new Vec2(0.3, 0.5),
-        lifetime: 20, // Auto-destroy after 20 beats
+        lifetime: 20,
       }),
       timing: 'perfect', // Will be refined by GameState based on actual input timing
     };

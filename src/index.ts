@@ -1,11 +1,12 @@
 /**
  * nomu - Audio Engine Prototype
- * 
+ *
  * Demonstrates the BeatClock and AudioEngine working together.
  * Press keys to test different sounds and BPM changes.
  */
 
-import { BeatClock, BeatInfo } from './audio/BeatClock';
+import type { BeatInfo } from './audio/BeatClock';
+import { BeatClock } from './audio/BeatClock';
 import { AudioEngine, AudioScheduler, SoundGenerators } from './audio/AudioEngine';
 
 // ============================================
@@ -36,7 +37,7 @@ const audioScheduler = new AudioScheduler(beatClock, audioEngine);
 // State
 // ============================================
 let lastBeatNumber = -1;
-let beatTimes: number[] = [];
+const beatTimes: number[] = [];
 let isProcessing = false;
 
 // ============================================
@@ -45,12 +46,12 @@ let isProcessing = false;
 function setupAudio(): void {
   audioEngine.init();
   audioEngine.preloadDefaults();
-  
+
   // Schedule the main kick on every beat
   audioScheduler.scheduleRecurring('kick', 1, 1.0, 0);
-  
+
   console.log('🎵 Audio engine initialized');
-  console.log(`   Sample rate: 44100 Hz`);
+  console.log('   Sample rate: 44100 Hz');
   console.log(`   Initial BPM: ${INITIAL_BPM}`);
 }
 
@@ -62,28 +63,30 @@ function onBeat(beatInfo: BeatInfo): void {
   const measureStr = `M${beatInfo.measureNumber + 1}`;
   const beatStr = `B${beatInfo.beatInMeasure + 1}`;
   const bpmStr = `${Math.round(beatInfo.bpm)} BPM`;
-  
+
   // Visual beat indicator
   const indicator = beatInfo.beatInMeasure === 0 ? '▓▓▓' : '░░░';
-  
+
   // Calculate timing accuracy
   const actualTime = performance.now();
   const scheduledTime = beatInfo.timestamp;
   const drift = actualTime - scheduledTime;
-  
+
   process.stdout.write(
     `\r${indicator} | ${measureStr}:${beatStr} | ${bpmStr} | ` +
-    `Drift: ${drift.toFixed(2)}ms | ` +
-    `Next in: ${beatClock.getTimeUntilNextBeat().toFixed(1)}ms   `
+      `Drift: ${drift.toFixed(2)}ms | ` +
+      `Next in: ${beatClock.getTimeUntilNextBeat().toFixed(1)}ms   `
   );
 
   // Process scheduled audio for this beat
   audioScheduler.processBeat(beatInfo.beatNumber);
-  
+
   // Track timing for analysis
   beatTimes.push(actualTime);
-  if (beatTimes.length > 100) beatTimes.shift();
-  
+  if (beatTimes.length > 100) {
+    beatTimes.shift();
+  }
+
   lastBeatNumber = beatInfo.beatNumber;
 }
 
@@ -92,7 +95,9 @@ function onBeat(beatInfo: BeatInfo): void {
 // ============================================
 function startAudioProcessing(): void {
   setInterval(() => {
-    if (isProcessing) return;
+    if (isProcessing) {
+      return;
+    }
     isProcessing = true;
     audioEngine.process();
     isProcessing = false;
@@ -117,7 +122,7 @@ function setupInput(): void {
     }
 
     const currentBPM = beatClock.getBPM();
-    
+
     switch (key) {
       case '+':
       case '=':
@@ -125,72 +130,72 @@ function setupInput(): void {
         beatClock.setBPM(currentBPM + 5, 4);
         console.log(`\n📈 BPM: ${currentBPM} → ${currentBPM + 5} (transitioning...)`);
         break;
-        
+
       case '-':
       case '_':
         // Decrease BPM by 5
         beatClock.setBPM(currentBPM - 5, 4);
         console.log(`\n📉 BPM: ${currentBPM} → ${currentBPM - 5} (transitioning...)`);
         break;
-        
+
       case '1':
         // Immediate BPM change
         beatClock.setBPMImmediate(120);
-        console.log(`\n⚡ BPM set to 120 immediately`);
+        console.log('\n⚡ BPM set to 120 immediately');
         break;
-        
+
       case '2':
         beatClock.setBPMImmediate(140);
-        console.log(`\n⚡ BPM set to 140 immediately`);
+        console.log('\n⚡ BPM set to 140 immediately');
         break;
-        
+
       case '3':
         beatClock.setBPMImmediate(160);
-        console.log(`\n⚡ BPM set to 160 immediately`);
+        console.log('\n⚡ BPM set to 160 immediately');
         break;
-        
+
       case 'k':
         // Trigger kick manually
         audioEngine.playSound('kick', 0, 0.8);
         console.log('\n🥁 Kick!');
         break;
-        
+
       case 's':
         audioEngine.playSound('snare', 0, 0.8);
         console.log('\n🥁 Snare!');
         break;
-        
+
       case 'h':
         audioEngine.playSound('hihat', 0, 0.6);
         console.log('\n🎵 Hi-hat!');
         break;
-        
+
       case 'p':
         audioEngine.playSound('pluck', 0, 0.7);
         console.log('\n✨ Pluck!');
         break;
-        
+
       case 'd':
         audioEngine.playSound('destroy', 0, 0.7);
         console.log('\n💥 Destroy!');
         break;
-        
+
       case 'c':
         audioEngine.playSound('comboUp', 0, 0.6);
         console.log('\n⭐ Combo Up!');
         break;
-        
+
       case 't':
         // Run timing test
         runTimingTest();
         break;
-        
-      case ' ':
+
+      case ' ': {
         // Space - simulate perfect hit
         const timeUntilNext = beatClock.getTimeUntilNextBeat();
         const intervalMs = 60000 / beatClock.getBPM();
         const accuracy = 1 - Math.abs(timeUntilNext - intervalMs / 2) / (intervalMs / 2);
-        
+
         if (accuracy > 0.8) {
           audioEngine.playSound('pluck', 0, 0.8);
           console.log(`\n✨ PERFECT! (${(accuracy * 100).toFixed(0)}%)`);
@@ -200,11 +205,12 @@ function setupInput(): void {
           console.log(`\n❌ Miss (${(accuracy * 100).toFixed(0)}%)`);
         }
         break;
-        
-      case '?':
-      case 'h':
+      }
+
+      case '?': {
         printHelp();
         break;
+      }
     }
   });
 }
@@ -215,26 +221,26 @@ function setupInput(): void {
 function runTimingTest(): void {
   console.log('\n📊 Timing Analysis (last 100 beats):');
   console.log('=====================================');
-  
+
   if (beatTimes.length < 2) {
     console.log('Not enough data yet...');
     return;
   }
-  
+
   const intervals: number[] = [];
   for (let i = 1; i < beatTimes.length; i++) {
     intervals.push(beatTimes[i] - beatTimes[i - 1]);
   }
-  
+
   const expectedInterval = 60000 / beatClock.getBPM();
   const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
   const minInterval = Math.min(...intervals);
   const maxInterval = Math.max(...intervals);
-  
+
   // Calculate jitter (standard deviation)
   const variance = intervals.reduce((sum, val) => sum + Math.pow(val - avgInterval, 2), 0) / intervals.length;
   const stdDev = Math.sqrt(variance);
-  
+
   console.log(`Expected interval: ${expectedInterval.toFixed(3)}ms`);
   console.log(`Average interval:  ${avgInterval.toFixed(3)}ms`);
   console.log(`Min interval:      ${minInterval.toFixed(3)}ms`);
@@ -242,7 +248,7 @@ function runTimingTest(): void {
   console.log(`Jitter (σ):        ${stdDev.toFixed(3)}ms`);
   console.log(`Drift from target: ${(avgInterval - expectedInterval).toFixed(3)}ms`);
   console.log('');
-  
+
   // Quality assessment
   if (stdDev < 1.0) {
     console.log('✅ EXCELLENT - Rock solid timing');
@@ -282,15 +288,15 @@ function shutdown(): void {
   console.log('\n\n🛑 Shutting down...');
   beatClock.stop();
   audioEngine.destroy();
-  
+
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
     process.stdin.pause();
   }
-  
+
   // Final timing report
   runTimingTest();
-  
+
   process.exit(0);
 }
 
@@ -311,12 +317,12 @@ function main(): void {
 
   // Register beat callback
   beatClock.onBeat(onBeat);
-  
+
   // Start the clock
   beatClock.start();
-  
+
   printHelp();
-  
+
   console.log('🎮 Running... Press SPACE on the beat!\n');
 }
 

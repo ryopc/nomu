@@ -27,16 +27,16 @@ export const SoundGenerators = {
     const samples = Math.floor(sampleRate * duration);
     const buffer = new Float32Array(samples);
     const baseFreq = 60; // Hz
-    
+
     for (let i = 0; i < samples; i++) {
       const t = i / sampleRate;
       // Pitch envelope: starts high, drops quickly
       const pitchEnv = Math.exp(-t * 30);
       const freq = baseFreq + 40 * pitchEnv;
-      
+
       // Amplitude envelope: sharp attack, exponential decay
       const ampEnv = Math.exp(-t * 20);
-      
+
       buffer[i] = Math.sin(2 * Math.PI * freq * t) * ampEnv * 0.8;
     }
     return buffer;
@@ -48,16 +48,16 @@ export const SoundGenerators = {
   snare: (sampleRate: number, duration: number = 0.12): Float32Array => {
     const samples = Math.floor(sampleRate * duration);
     const buffer = new Float32Array(samples);
-    
+
     for (let i = 0; i < samples; i++) {
       const t = i / sampleRate;
       // White noise
-      const noise = (Math.random() * 2 - 1);
+      const noise = Math.random() * 2 - 1;
       // Amplitude envelope: very sharp attack, quick decay
       const ampEnv = Math.exp(-t * 40);
       // Add a bit of tonal character (bandpass-ish)
       const tone = Math.sin(2 * Math.PI * 200 * t) * Math.exp(-t * 30) * 0.3;
-      
+
       buffer[i] = (noise * 0.7 + tone) * ampEnv * 0.6;
     }
     return buffer;
@@ -69,10 +69,10 @@ export const SoundGenerators = {
   hihat: (sampleRate: number, duration: number = 0.05): Float32Array => {
     const samples = Math.floor(sampleRate * duration);
     const buffer = new Float32Array(samples);
-    
+
     for (let i = 0; i < samples; i++) {
       const t = i / sampleRate;
-      const noise = (Math.random() * 2 - 1);
+      const noise = Math.random() * 2 - 1;
       const ampEnv = Math.exp(-t * 100);
       buffer[i] = noise * ampEnv * 0.4;
     }
@@ -85,14 +85,15 @@ export const SoundGenerators = {
   pluck: (sampleRate: number, duration: number = 0.3, freq: number = 880): Float32Array => {
     const samples = Math.floor(sampleRate * duration);
     const buffer = new Float32Array(samples);
-    
+
     for (let i = 0; i < samples; i++) {
       const t = i / sampleRate;
       // Karplus-Strong-ish plucky sound
       const ampEnv = Math.exp(-t * 8);
-      const harmonic = Math.sin(2 * Math.PI * freq * t) * 0.6 +
-                       Math.sin(2 * Math.PI * freq * 2 * t) * 0.3 +
-                       Math.sin(2 * Math.PI * freq * 3 * t) * 0.1;
+      const harmonic =
+        Math.sin(2 * Math.PI * freq * t) * 0.6 +
+        Math.sin(2 * Math.PI * freq * 2 * t) * 0.3 +
+        Math.sin(2 * Math.PI * freq * 3 * t) * 0.1;
       buffer[i] = harmonic * ampEnv * 0.5;
     }
     return buffer;
@@ -104,10 +105,10 @@ export const SoundGenerators = {
   destroy: (sampleRate: number, duration: number = 0.2): Float32Array => {
     const samples = Math.floor(sampleRate * duration);
     const buffer = new Float32Array(samples);
-    
+
     for (let i = 0; i < samples; i++) {
       const t = i / sampleRate;
-      const noise = (Math.random() * 2 - 1);
+      const noise = Math.random() * 2 - 1;
       const pitch = 400 * Math.exp(-t * 15);
       const tone = Math.sin(2 * Math.PI * pitch * t) * 0.4;
       const ampEnv = Math.exp(-t * 12);
@@ -122,8 +123,8 @@ export const SoundGenerators = {
   comboUp: (sampleRate: number, duration: number = 0.5): Float32Array => {
     const samples = Math.floor(sampleRate * duration);
     const buffer = new Float32Array(samples);
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-    
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+
     for (let i = 0; i < samples; i++) {
       const t = i / sampleRate;
       let sum = 0;
@@ -147,15 +148,15 @@ export class AudioEngine {
   private sampleRate: number;
   private channels: number;
   private bufferSize: number;
-  
+
   // Sound cache
   private soundCache: Map<string, Float32Array> = new Map();
-  
+
   // Mixing buffer
   private mixBuffer: Float32Array | null = null;
   private mixBufferWritePos: number = 0;
   private mixBufferDuration: number = 0; // seconds
-  
+
   // Output gain
   private masterGain: number = 0.3;
 
@@ -169,7 +170,7 @@ export class AudioEngine {
     this.sampleRate = this.config.sampleRate;
     this.channels = this.config.channels;
     this.bufferSize = this.config.bufferSize;
-    
+
     // Initialize mix buffer (2 seconds of audio)
     this.mixBufferDuration = 2.0;
     const mixBufferSize = Math.floor(this.sampleRate * this.mixBufferDuration);
@@ -180,8 +181,10 @@ export class AudioEngine {
    * Initialize the speaker output
    */
   init(): void {
-    if (this.speaker) return;
-    
+    if (this.speaker) {
+      return;
+    }
+
     this.speaker = new Speaker({
       channels: this.channels,
       bitDepth: this.config.bitDepth,
@@ -218,7 +221,9 @@ export class AudioEngine {
    */
   playSound(name: string, delaySeconds: number = 0, gain: number = 1.0): boolean {
     const sound = this.soundCache.get(name);
-    if (!sound || !this.mixBuffer) return false;
+    if (!sound || !this.mixBuffer) {
+      return false;
+    }
 
     const startSample = Math.floor((this.mixBufferWritePos + delaySeconds * this.sampleRate) % this.mixBuffer.length);
     this.mixIntoBuffer(sound, startSample, gain * this.masterGain);
@@ -230,7 +235,9 @@ export class AudioEngine {
    */
   playSoundAt(name: string, absoluteTime: number, gain: number = 1.0): boolean {
     const sound = this.soundCache.get(name);
-    if (!sound || !this.mixBuffer) return false;
+    if (!sound || !this.mixBuffer) {
+      return false;
+    }
 
     const startSample = Math.floor(absoluteTime * this.sampleRate) % this.mixBuffer.length;
     this.mixIntoBuffer(sound, startSample, gain * this.masterGain);
@@ -241,11 +248,13 @@ export class AudioEngine {
    * Mix a sound buffer into the circular mix buffer
    */
   private mixIntoBuffer(source: Float32Array, startSample: number, gain: number): void {
-    if (!this.mixBuffer) return;
-    
+    if (!this.mixBuffer) {
+      return;
+    }
+
     const bufLen = this.mixBuffer.length;
     const srcLen = source.length;
-    
+
     for (let i = 0; i < srcLen; i++) {
       const idx = (startSample + i) % bufLen;
       this.mixBuffer[idx] = Math.max(-1, Math.min(1, this.mixBuffer[idx] + source[i] * gain));
@@ -257,22 +266,24 @@ export class AudioEngine {
    * This should be called from a high-priority timer or audio thread
    */
   process(): void {
-    if (!this.speaker || !this.mixBuffer) return;
+    if (!this.speaker || !this.mixBuffer) {
+      return;
+    }
 
     const chunkSize = this.bufferSize;
     const outputBuffer = Buffer.alloc(chunkSize * this.channels * 2); // 16-bit = 2 bytes
-    
+
     for (let i = 0; i < chunkSize; i++) {
       const sample = this.mixBuffer[this.mixBufferWritePos];
       // Clear the buffer as we read (circular buffer)
       this.mixBuffer[this.mixBufferWritePos] = 0;
       this.mixBufferWritePos = (this.mixBufferWritePos + 1) % this.mixBuffer.length;
-      
+
       // Convert float32 [-1, 1] to int16
       const int16 = Math.max(-32768, Math.min(32767, Math.floor(sample * 32767)));
       outputBuffer.writeInt16LE(int16, i * 2);
     }
-    
+
     this.speaker.write(outputBuffer);
   }
 
@@ -308,7 +319,7 @@ export class AudioEngine {
 export class AudioScheduler {
   private beatClock: any; // BeatClock type - avoid circular import
   private audioEngine: AudioEngine;
-  private scheduledSounds: Map<number, Array<{name: string, gain: number}>> = new Map();
+  private scheduledSounds: Map<number, Array<{ name: string; gain: number }>> = new Map();
   private lookaheadBeats: number = 2;
 
   constructor(beatClock: any, audioEngine: AudioEngine) {
@@ -322,7 +333,7 @@ export class AudioScheduler {
   scheduleOnBeat(beatOffset: number, soundName: string, gain: number = 1.0): void {
     const currentBeat = this.beatClock.getBeatNumber();
     const targetBeat = currentBeat + beatOffset;
-    
+
     if (!this.scheduledSounds.has(targetBeat)) {
       this.scheduledSounds.set(targetBeat, []);
     }
@@ -335,7 +346,7 @@ export class AudioScheduler {
   scheduleRecurring(soundName: string, intervalBeats: number = 1, gain: number = 1.0, offsetBeats: number = 0): void {
     const currentBeat = this.beatClock.getBeatNumber();
     const startBeat = currentBeat + offsetBeats;
-    
+
     // Schedule for the next several measures
     for (let beat = startBeat; beat < startBeat + 32; beat += intervalBeats) {
       this.scheduleOnBeat(beat - currentBeat, soundName, gain);
@@ -350,14 +361,14 @@ export class AudioScheduler {
     if (sounds) {
       const now = performance.now() / 1000; // seconds
       const nextBeatTime = this.beatClock.getNextBeatTime() / 1000;
-      
+
       sounds.forEach(({ name, gain }) => {
         // Schedule at the exact beat time
         this.audioEngine.playSoundAt(name, nextBeatTime, gain);
       });
       this.scheduledSounds.delete(beatNumber);
     }
-    
+
     // Clean up old scheduled sounds
     for (const [beat] of this.scheduledSounds) {
       if (beat < beatNumber - 4) {

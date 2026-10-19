@@ -24,36 +24,36 @@ export enum EntityLayer {
 export interface EntityConfig {
   position: Vec2;
   velocity?: Vec2;
-  size?: Vec2;          // For collision (half-extents)
-  char?: string;        // Display character
-  color?: string;       // ANSI color code
+  size?: Vec2; // For collision (half-extents)
+  char?: string; // Display character
+  color?: string; // ANSI color code
   layer?: EntityLayer;
-  lifetime?: number;    // Beats until auto-destroy (0 = infinite)
+  lifetime?: number; // Beats until auto-destroy (0 = infinite)
 }
 
 export abstract class Entity {
   // Identity
   readonly id: number;
   readonly type: EntityType;
-  
+
   // Transform
   position: Vec2;
   velocity: Vec2;
-  size: Vec2;           // Half-extents for AABB collision
-  
+  size: Vec2; // Half-extents for AABB collision
+
   // Rendering
   char: string;
   color: string;
   layer: EntityLayer;
-  
+
   // State
   active: boolean = true;
-  age: number = 0;      // Beats alive
-  lifetime: number;     // Beats until auto-destroy (0 = infinite)
-  
+  age: number = 0; // Beats alive
+  lifetime: number; // Beats until auto-destroy (0 = infinite)
+
   // Beat-sync
   protected lastBeatPosition: Vec2;
-  protected beatProgress: number = 0;  // 0-1 within current beat
+  protected beatProgress: number = 0; // 0-1 within current beat
 
   private static idCounter = 0;
 
@@ -78,7 +78,7 @@ export abstract class Entity {
     this.age++;
     this.lastBeatPosition.copy(this.position);
     this.beatProgress = 0;
-    
+
     // Lifetime check
     if (this.lifetime > 0 && this.age >= this.lifetime) {
       this.destroy();
@@ -106,14 +106,18 @@ export abstract class Entity {
    * Check if this entity collides with another (AABB)
    */
   collidesWith(other: Entity): boolean {
-    if (!this.active || !other.active) return false;
-    if (this === other) return false;
-    
+    if (!this.active || !other.active) {
+      return false;
+    }
+    if (this === other) {
+      return false;
+    }
+
     const dx = Math.abs(this.position.x - other.position.x);
     const dy = Math.abs(this.position.y - other.position.y);
     const combinedHalfWidth = this.size.x + other.size.x;
     const combinedHalfHeight = this.size.y + other.size.y;
-    
+
     return dx < combinedHalfWidth && dy < combinedHalfHeight;
   }
 
@@ -242,7 +246,7 @@ export class EntityManager {
     const results: Array<[Entity, Entity]> = [];
     const listA = this.getByType(typeA);
     const listB = this.getByType(typeB);
-    
+
     for (const a of listA) {
       for (const b of listB) {
         if (a.collidesWith(b)) {
@@ -256,7 +260,7 @@ export class EntityManager {
   findNearest(position: Vec2, type: EntityType, maxDistance: number = Infinity): Entity | null {
     let nearest: Entity | null = null;
     let nearestDist = maxDistance;
-    
+
     for (const entity of this.getByType(type)) {
       const dist = entity.position.distance(position);
       if (dist < nearestDist) {
@@ -273,7 +277,11 @@ export class EntityManager {
 
   getActiveCount(): number {
     let count = 0;
-    for (const e of this.entities.values()) if (e.active) count++;
+    for (const e of this.entities.values()) {
+      if (e.active) {
+        count++;
+      }
+    }
     return count;
   }
 }

@@ -3,8 +3,9 @@
  * Optimized for beat-synchronized game loop
  */
 
-import { Entity, EntityType, EntityManager } from './Entity';
-import { Bullet } from './Bullet';
+import type { Entity, EntityManager } from './Entity';
+import { EntityType } from './Entity';
+import type { Bullet } from './Bullet';
 import { Enemy, EnemyKind } from './Enemy';
 import { Vec2 } from '../utils/Vec2';
 
@@ -16,7 +17,7 @@ export interface CollisionResult {
 
 export interface HitJudgment {
   timing: 'perfect' | 'great' | 'miss';
-  timingMs: number;      // Offset from beat in ms
+  timingMs: number; // Offset from beat in ms
   scoreMultiplier: number;
   comboBonus: number;
 }
@@ -41,7 +42,9 @@ export class CollisionSystem {
     this.hitCallbacks.push(callback);
     return () => {
       const idx = this.hitCallbacks.indexOf(callback);
-      if (idx >= 0) this.hitCallbacks.splice(idx, 1);
+      if (idx >= 0) {
+        this.hitCallbacks.splice(idx, 1);
+      }
     };
   }
 
@@ -52,7 +55,9 @@ export class CollisionSystem {
     this.missCallbacks.push(callback);
     return () => {
       const idx = this.missCallbacks.indexOf(callback);
-      if (idx >= 0) this.missCallbacks.splice(idx, 1);
+      if (idx >= 0) {
+        this.missCallbacks.splice(idx, 1);
+      }
     };
   }
 
@@ -65,12 +70,16 @@ export class CollisionSystem {
 
     // Bullet vs Enemy collisions
     const collisions = this.entityManager.checkCollisions(EntityType.Bullet, EntityType.Enemy);
-    
+
     for (const [bullet, enemy] of collisions) {
-      if (!bullet.active || !enemy.active) continue;
-      
+      if (!bullet.active || !enemy.active) {
+        continue;
+      }
+
       // Don't collide with dying enemies (type guard)
-      if (enemy instanceof Enemy && enemy.isDyingState()) continue;
+      if (enemy instanceof Enemy && enemy.isDyingState()) {
+        continue;
+      }
 
       const b = bullet as Bullet;
       const e = enemy as Enemy;
@@ -78,14 +87,11 @@ export class CollisionSystem {
       // Resolve collision
       const killed = e.takeDamage(b.getDamage());
       b.triggerHitEffect();
-      
+
       // Bullet is consumed on hit (unless piercing)
       b.destroy();
 
-      const position = new Vec2(
-        (b.position.x + e.position.x) * 0.5,
-        (b.position.y + e.position.y) * 0.5
-      );
+      const position = new Vec2((b.position.x + e.position.x) * 0.5, (b.position.y + e.position.y) * 0.5);
 
       const result: CollisionResult = { bullet: b, enemy: e, position };
       results.push(result);
@@ -122,7 +128,7 @@ export class CollisionSystem {
   private calculateJudgment(timeSinceBeatMs: number, beatIntervalMs: number): HitJudgment {
     // Distance from nearest beat
     const distFromBeat = Math.min(timeSinceBeatMs, beatIntervalMs - timeSinceBeatMs);
-    
+
     if (distFromBeat <= this.PERFECT_WINDOW) {
       return {
         timing: 'perfect',
@@ -165,12 +171,9 @@ export class CollisionSystem {
   private spawnSplitters(parent: Enemy, position: Vec2): void {
     const splitCount = 2;
     for (let i = 0; i < splitCount; i++) {
-      const angle = (Math.PI * 2 / splitCount) * i;
-      const splitPos = new Vec2(
-        position.x + Math.cos(angle) * 2,
-        position.y + Math.sin(angle) * 2
-      );
-      
+      const angle = ((Math.PI * 2) / splitCount) * i;
+      const splitPos = new Vec2(position.x + Math.cos(angle) * 2, position.y + Math.sin(angle) * 2);
+
       const splitter = Enemy.createBasic(splitPos, 1);
       splitter.hp = 1;
       splitter.scoreValue = 50;
@@ -178,7 +181,7 @@ export class CollisionSystem {
       splitter.char = '·';
       splitter.color = '\x1b[90m'; // Gray
       splitter.setScreenBounds(1, 79, 24);
-      
+
       this.entityManager.add(splitter);
     }
   }
@@ -199,8 +202,12 @@ export class CollisionSystem {
   /**
    * Get timing window constants for external use
    */
-  getPerfectWindow(): number { return this.PERFECT_WINDOW; }
-  getGreatWindow(): number { return this.GREAT_WINDOW; }
+  getPerfectWindow(): number {
+    return this.PERFECT_WINDOW;
+  }
+  getGreatWindow(): number {
+    return this.GREAT_WINDOW;
+  }
 }
 
 /**
@@ -241,7 +248,9 @@ export class SpatialGrid {
     const cell = this.grid.get(key);
     if (cell) {
       const idx = cell.indexOf(entity);
-      if (idx >= 0) cell.splice(idx, 1);
+      if (idx >= 0) {
+        cell.splice(idx, 1);
+      }
     }
   }
 

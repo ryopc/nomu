@@ -3,24 +3,24 @@
  * Core mechanic: "Play well → BPM goes up → Game gets faster/harder but more rewarding"
  */
 
-import { BeatClock } from '../audio/BeatClock';
-import { AudioScheduler } from '../audio/AudioEngine';
-import { HitJudgment } from './Collision';
+import type { BeatClock } from '../audio/BeatClock';
+import type { AudioScheduler } from '../audio/AudioEngine';
+import type { HitJudgment } from './Collision';
 
 export interface ComboConfig {
   baseBPM: number;
   minBPM: number;
   maxBPM: number;
-  bpmPerComboTier: number;    // BPM increase per tier
-  combosPerTier: number;      // Combos needed for next tier
-  missBPMPenalty: number;     // BPM decrease on miss
-  transitionBeats: number;    // Beats for BPM transition
+  bpmPerComboTier: number; // BPM increase per tier
+  combosPerTier: number; // Combos needed for next tier
+  missBPMPenalty: number; // BPM decrease on miss
+  transitionBeats: number; // Beats for BPM transition
 }
 
 export interface ComboState {
   combo: number;
   maxCombo: number;
-  tier: number;               // Current BPM tier (0-based)
+  tier: number; // Current BPM tier (0-based)
   bpm: number;
   targetBPM: number;
   isTransitioning: boolean;
@@ -34,7 +34,7 @@ export class ComboSystem {
   private state: ComboState;
   private beatClock: BeatClock;
   private audioScheduler: AudioScheduler;
-  
+
   // Callbacks
   private onComboChangeCallbacks: Array<(combo: number) => void> = [];
   private onTierChangeCallbacks: Array<(tier: number, newBPM: number) => void> = [];
@@ -43,7 +43,7 @@ export class ComboSystem {
   constructor(beatClock: BeatClock, audioScheduler: AudioScheduler, config?: Partial<ComboConfig>) {
     this.beatClock = beatClock;
     this.audioScheduler = audioScheduler;
-    
+
     this.config = {
       baseBPM: config?.baseBPM || 120,
       minBPM: config?.minBPM || 60,
@@ -72,7 +72,7 @@ export class ComboSystem {
   }
 
   private setupBeatClockListener(): void {
-    this.beatClock.onBPMChange((bpm) => {
+    this.beatClock.onBPMChange(bpm => {
       this.state.bpm = bpm;
       this.state.isTransitioning = this.beatClock.isTransitioning();
     });
@@ -121,7 +121,7 @@ export class ComboSystem {
       this.state.combo = 0;
       this.onComboChangeCallbacks.forEach(cb => cb(0));
     }
-    
+
     // BPM penalty on miss
     this.applyMissPenalty();
   }
@@ -141,12 +141,12 @@ export class ComboSystem {
       this.config.maxBPM,
       this.config.baseBPM + this.state.tier * this.config.bpmPerComboTier
     );
-    
+
     this.beatClock.setBPM(this.state.targetBPM, this.config.transitionBeats);
-    
+
     // Play tier-up sound
     this.audioScheduler.scheduleOnBeat(0, 'comboUp', 0.5);
-    
+
     this.onTierChangeCallbacks.forEach(cb => cb(this.state.tier, this.state.targetBPM));
   }
 
@@ -187,7 +187,9 @@ export class ComboSystem {
     this.onComboChangeCallbacks.push(callback);
     return () => {
       const idx = this.onComboChangeCallbacks.indexOf(callback);
-      if (idx >= 0) this.onComboChangeCallbacks.splice(idx, 1);
+      if (idx >= 0) {
+        this.onComboChangeCallbacks.splice(idx, 1);
+      }
     };
   }
 
@@ -195,7 +197,9 @@ export class ComboSystem {
     this.onTierChangeCallbacks.push(callback);
     return () => {
       const idx = this.onTierChangeCallbacks.indexOf(callback);
-      if (idx >= 0) this.onTierChangeCallbacks.splice(idx, 1);
+      if (idx >= 0) {
+        this.onTierChangeCallbacks.splice(idx, 1);
+      }
     };
   }
 
@@ -203,28 +207,48 @@ export class ComboSystem {
     this.onJudgmentCallbacks.push(callback);
     return () => {
       const idx = this.onJudgmentCallbacks.indexOf(callback);
-      if (idx >= 0) this.onJudgmentCallbacks.splice(idx, 1);
+      if (idx >= 0) {
+        this.onJudgmentCallbacks.splice(idx, 1);
+      }
     };
   }
 
   // Getters
-  getCombo(): number { return this.state.combo; }
-  getMaxCombo(): number { return this.state.maxCombo; }
-  getTier(): number { return this.state.tier; }
-  getBPM(): number { return this.state.bpm; }
-  getTargetBPM(): number { return this.state.targetBPM; }
+  getCombo(): number {
+    return this.state.combo;
+  }
+  getMaxCombo(): number {
+    return this.state.maxCombo;
+  }
+  getTier(): number {
+    return this.state.tier;
+  }
+  getBPM(): number {
+    return this.state.bpm;
+  }
+  getTargetBPM(): number {
+    return this.state.targetBPM;
+  }
   getAccuracy(): number {
     const total = this.state.perfectCount + this.state.greatCount + this.state.missCount;
-    if (total === 0) return 1;
+    if (total === 0) {
+      return 1;
+    }
     return (this.state.perfectCount + this.state.greatCount) / total;
   }
   getPerfectRate(): number {
     const total = this.state.perfectCount + this.state.greatCount + this.state.missCount;
-    if (total === 0) return 0;
+    if (total === 0) {
+      return 0;
+    }
     return this.state.perfectCount / total;
   }
-  getState(): Readonly<ComboState> { return this.state; }
-  getConfig(): Readonly<ComboConfig> { return this.config; }
+  getState(): Readonly<ComboState> {
+    return this.state;
+  }
+  getConfig(): Readonly<ComboConfig> {
+    return this.config;
+  }
 
   /**
    * Get score multiplier based on current combo

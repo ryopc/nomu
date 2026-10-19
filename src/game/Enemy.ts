@@ -7,12 +7,12 @@ import { Vec2 } from '../utils/Vec2';
 import { Random, rand } from '../utils/Random';
 
 export enum EnemyKind {
-  Basic = 'basic',           // Straight down
-  Zigzag = 'zigzag',         // Side to side on beat
-  Rhythmic = 'rhythmic',     // Moves only on beat, predictable
-  Charger = 'charger',       // Fast, aims at player
-  Splitter = 'splitter',     // Splits on hit
-  Boss = 'boss',             // Multi-phase, complex patterns
+  Basic = 'basic', // Straight down
+  Zigzag = 'zigzag', // Side to side on beat
+  Rhythmic = 'rhythmic', // Moves only on beat, predictable
+  Charger = 'charger', // Fast, aims at player
+  Splitter = 'splitter', // Splits on hit
+  Boss = 'boss', // Multi-phase, complex patterns
 }
 
 export interface EnemyConfig {
@@ -20,11 +20,11 @@ export interface EnemyConfig {
   position: Vec2;
   hp?: number;
   scoreValue?: number;
-  speed?: number;           // Cells per beat
+  speed?: number; // Cells per beat
   color?: string;
   char?: string;
   size?: Vec2;
-  patternConfig?: any;      // Kind-specific config
+  patternConfig?: any; // Kind-specific config
 }
 
 export class Enemy extends Entity {
@@ -33,13 +33,13 @@ export class Enemy extends Entity {
   maxHp: number;
   scoreValue: number;
   speed: number;
-  
+
   // Movement pattern
   private patternType: string = 'straight';
   private patternTimer: number = 0;
   private patternData: any = {};
   private baseX: number = 0;
-  
+
   // Visual
   private baseChar: string;
   private baseColor: string;
@@ -178,24 +178,28 @@ export class Enemy extends Entity {
 
   private executePattern(beatNumber: number): void {
     const measureBeat = beatNumber % 4; // 4/4 time
-    
+
     switch (this.patternType) {
-      case 'straight':
+      case 'straight': {
         this.position.y += this.speed;
         break;
+      }
 
-      case 'zigzag':
+      case 'zigzag': {
         // Sinusoidal horizontal movement
         const cycle = (beatNumber + this.patternData.phase) / this.patternData.frequency;
         const targetX = this.baseX + Math.sin(cycle * Math.PI * 2) * this.patternData.amplitude;
         this.position.x = targetX;
         this.position.y += this.speed;
         // Clamp to screen
-        this.position.x = Math.max(this.screenLeft + this.size.x, 
-          Math.min(this.screenRight - this.size.x, this.position.x));
+        this.position.x = Math.max(
+          this.screenLeft + this.size.x,
+          Math.min(this.screenRight - this.size.x, this.position.x)
+        );
         break;
+      }
 
-      case 'rhythmic':
+      case 'rhythmic': {
         // Move only on specific beats
         if (this.patternData.moveBeats.includes(measureBeat)) {
           this.position.x += this.patternData.direction * this.patternData.moveDistance;
@@ -210,8 +214,9 @@ export class Enemy extends Entity {
         }
         this.position.y += this.speed;
         break;
+      }
 
-      case 'charger':
+      case 'charger': {
         // Periodically charge toward player's X position
         if (beatNumber % this.patternData.chargeInterval === 0) {
           this.patternData.targetX = this.baseX; // Would be set by GameState to player X
@@ -223,17 +228,19 @@ export class Enemy extends Entity {
         }
         this.position.y += this.speed;
         break;
+      }
 
-      case 'boss':
+      case 'boss': {
         this.executeBossPattern(beatNumber);
         break;
+      }
     }
   }
 
   private executeBossPattern(beatNumber: number): void {
     const phase = this.patternData.phase;
     const phases = this.patternData.phases;
-    
+
     if (phases.length === 0) {
       // Default boss behavior
       this.position.y += this.speed * 0.5;
@@ -393,17 +400,17 @@ export class Enemy extends Entity {
  * EnemySpawner - Handles wave-based enemy spawning
  */
 export interface WaveConfig {
-  beat: number;           // Beat number to spawn (relative to wave start)
+  beat: number; // Beat number to spawn (relative to wave start)
   kind: EnemyKind;
   count: number;
-  positions: Vec2[];      // Spawn positions
+  positions: Vec2[]; // Spawn positions
   level?: number;
-  delay?: number;         // Additional delay in beats
+  delay?: number; // Additional delay in beats
 }
 
 export interface WavePattern {
   name: string;
-  duration: number;       // Beats
+  duration: number; // Beats
   spawns: WaveConfig[];
 }
 
@@ -436,7 +443,12 @@ export class EnemySpawner {
         { beat: 16, kind: EnemyKind.Zigzag, count: 1, positions: [new Vec2(40, 2)] },
         { beat: 20, kind: EnemyKind.Basic, count: 2, positions: [new Vec2(12, 2), new Vec2(28, 2)] },
         { beat: 24, kind: EnemyKind.Rhythmic, count: 1, positions: [new Vec2(35, 2)] },
-        { beat: 28, kind: EnemyKind.Basic, count: 4, positions: [new Vec2(8, 2), new Vec2(18, 2), new Vec2(28, 2), new Vec2(38, 2)] },
+        {
+          beat: 28,
+          kind: EnemyKind.Basic,
+          count: 4,
+          positions: [new Vec2(8, 2), new Vec2(18, 2), new Vec2(28, 2), new Vec2(38, 2)],
+        },
       ],
     });
 
@@ -449,12 +461,27 @@ export class EnemySpawner {
         { beat: 4, kind: EnemyKind.Zigzag, count: 2, positions: [new Vec2(15, 2), new Vec2(25, 2)] },
         { beat: 6, kind: EnemyKind.Rhythmic, count: 2, positions: [new Vec2(12, 2), new Vec2(28, 2)] },
         { beat: 8, kind: EnemyKind.Charger, count: 1, positions: [new Vec2(20, 2)] },
-        { beat: 10, kind: EnemyKind.Basic, count: 4, positions: [new Vec2(8, 2), new Vec2(16, 2), new Vec2(24, 2), new Vec2(32, 2)] },
+        {
+          beat: 10,
+          kind: EnemyKind.Basic,
+          count: 4,
+          positions: [new Vec2(8, 2), new Vec2(16, 2), new Vec2(24, 2), new Vec2(32, 2)],
+        },
         { beat: 14, kind: EnemyKind.Splitter, count: 1, positions: [new Vec2(20, 2)] },
         { beat: 18, kind: EnemyKind.Zigzag, count: 3, positions: [new Vec2(10, 2), new Vec2(20, 2), new Vec2(30, 2)] },
         { beat: 22, kind: EnemyKind.Charger, count: 2, positions: [new Vec2(15, 2), new Vec2(25, 2)] },
-        { beat: 26, kind: EnemyKind.Rhythmic, count: 3, positions: [new Vec2(10, 2), new Vec2(20, 2), new Vec2(30, 2)] },
-        { beat: 30, kind: EnemyKind.Basic, count: 5, positions: [new Vec2(6, 2), new Vec2(14, 2), new Vec2(22, 2), new Vec2(30, 2), new Vec2(38, 2)] },
+        {
+          beat: 26,
+          kind: EnemyKind.Rhythmic,
+          count: 3,
+          positions: [new Vec2(10, 2), new Vec2(20, 2), new Vec2(30, 2)],
+        },
+        {
+          beat: 30,
+          kind: EnemyKind.Basic,
+          count: 5,
+          positions: [new Vec2(6, 2), new Vec2(14, 2), new Vec2(22, 2), new Vec2(30, 2), new Vec2(38, 2)],
+        },
       ],
     });
 
@@ -463,12 +490,29 @@ export class EnemySpawner {
       name: 'drop',
       duration: 64,
       spawns: [
-        { beat: 0, kind: EnemyKind.Basic, count: 5, positions: [new Vec2(8, 2), new Vec2(16, 2), new Vec2(24, 2), new Vec2(32, 2), new Vec2(40, 2)] },
+        {
+          beat: 0,
+          kind: EnemyKind.Basic,
+          count: 5,
+          positions: [new Vec2(8, 2), new Vec2(16, 2), new Vec2(24, 2), new Vec2(32, 2), new Vec2(40, 2)],
+        },
         { beat: 2, kind: EnemyKind.Zigzag, count: 3, positions: [new Vec2(12, 2), new Vec2(24, 2), new Vec2(36, 2)] },
         { beat: 4, kind: EnemyKind.Rhythmic, count: 3, positions: [new Vec2(10, 2), new Vec2(22, 2), new Vec2(34, 2)] },
         { beat: 6, kind: EnemyKind.Charger, count: 2, positions: [new Vec2(18, 2), new Vec2(30, 2)] },
         { beat: 8, kind: EnemyKind.Splitter, count: 2, positions: [new Vec2(15, 2), new Vec2(25, 2)] },
-        { beat: 10, kind: EnemyKind.Basic, count: 6, positions: [new Vec2(6, 2), new Vec2(13, 2), new Vec2(20, 2), new Vec2(27, 2), new Vec2(34, 2), new Vec2(41, 2)] },
+        {
+          beat: 10,
+          kind: EnemyKind.Basic,
+          count: 6,
+          positions: [
+            new Vec2(6, 2),
+            new Vec2(13, 2),
+            new Vec2(20, 2),
+            new Vec2(27, 2),
+            new Vec2(34, 2),
+            new Vec2(41, 2),
+          ],
+        },
         // Repeat with variations...
       ],
     });
@@ -485,7 +529,12 @@ export class EnemySpawner {
         { beat: 48, kind: EnemyKind.Rhythmic, count: 2, positions: [new Vec2(12, 2), new Vec2(38, 2)] },
         { beat: 64, kind: EnemyKind.Charger, count: 2, positions: [new Vec2(15, 2), new Vec2(35, 2)] },
         { beat: 80, kind: EnemyKind.Splitter, count: 2, positions: [new Vec2(10, 2), new Vec2(40, 2)] },
-        { beat: 96, kind: EnemyKind.Basic, count: 4, positions: [new Vec2(8, 2), new Vec2(18, 2), new Vec2(32, 2), new Vec2(42, 2)] },
+        {
+          beat: 96,
+          kind: EnemyKind.Basic,
+          count: 4,
+          positions: [new Vec2(8, 2), new Vec2(18, 2), new Vec2(32, 2), new Vec2(42, 2)],
+        },
       ],
     });
   }
@@ -508,8 +557,10 @@ export class EnemySpawner {
   }
 
   update(currentBeat: number): void {
-    if (!this.currentWave) return;
-    
+    if (!this.currentWave) {
+      return;
+    }
+
     const wave = this.wavePatterns.get(this.currentWave)!;
     const relativeBeat = currentBeat - this.waveStartBeat;
 
@@ -535,7 +586,7 @@ export class EnemySpawner {
       const pos = spawn.positions[i % spawn.positions.length].clone();
       // Add some variance
       pos.x += rand.floatRange(-0.5, 0.5);
-      
+
       let enemy: Enemy;
       switch (spawn.kind) {
         case EnemyKind.Basic:
@@ -574,7 +625,9 @@ export class EnemySpawner {
   }
 
   getWaveProgress(): number {
-    if (!this.currentWave) return 0;
+    if (!this.currentWave) {
+      return 0;
+    }
     const wave = this.wavePatterns.get(this.currentWave)!;
     return this.nextSpawnIndex / wave.spawns.length;
   }

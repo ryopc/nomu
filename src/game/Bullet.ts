@@ -8,19 +8,19 @@ import { Vec2 } from '../utils/Vec2';
 
 export interface BulletConfig {
   position: Vec2;
-  speed?: number;       // Cells per beat
+  speed?: number; // Cells per beat
   damage?: number;
   color?: string;
   char?: string;
   size?: Vec2;
-  lifetime?: number;    // Beats
+  lifetime?: number; // Beats
 }
 
 export class Bullet extends Entity {
   private speed: number;
   private damage: number;
   private screenTop: number;
-  protected hitEffect: boolean = false;
+  private hitEffect: boolean = false;
 
   constructor(config: BulletConfig) {
     super(EntityType.Bullet, {
@@ -71,6 +71,15 @@ export class Bullet extends Entity {
     this.hitEffect = true;
   }
 
+  resetForReuse(position: Vec2, char: string, color: string): void {
+    this.position.copy(position);
+    this.active = true;
+    this.age = 0;
+    this.char = char;
+    this.color = color;
+    this.hitEffect = false;
+  }
+
   getDamage(): number {
     return this.damage;
   }
@@ -97,19 +106,14 @@ export class BulletPool {
 
   acquire(position: Vec2): Bullet {
     let bullet: Bullet;
-    
+
     if (this.pool.length > 0) {
       bullet = this.pool.pop()!;
-      bullet.position.copy(position);
-      bullet.active = true;
-      bullet.age = 0;
-      bullet.char = this.config.char || '│';
-      bullet.color = this.config.color || '\x1b[96m';
-      bullet.hitEffect = false;
+      bullet.resetForReuse(position, this.config.char || '│', this.config.color || '\x1b[96m');
     } else {
       bullet = new Bullet({ ...this.config, position: position.clone() });
     }
-    
+
     this.active.push(bullet);
     return bullet;
   }
